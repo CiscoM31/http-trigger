@@ -6,7 +6,6 @@ require (
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/googleapis/gnostic v0.2.0 // indirect
 	github.com/kubeless/kubeless v1.0.7
-	github.com/mitchellh/gox v1.0.1 // indirect
 	github.com/sirupsen/logrus v1.2.0
 	github.com/spf13/cobra v1.1.1
 	k8s.io/api v0.0.0-20180308224125-73d903622b73
