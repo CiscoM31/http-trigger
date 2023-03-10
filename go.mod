@@ -13,4 +13,4 @@ require (
 	k8s.io/client-go v7.0.0+incompatible
 )
 
-replace github.com/kubeless/kubeless v1.0.7 => github.com/CiscoM31/kubeless v1.0.9-cisco
+replace github.com/kubeless/kubeless v1.0.7 => github.com/CiscoM31/kubeless v1.0.9-cisco.0.20230308175931-94b8aafeb718
