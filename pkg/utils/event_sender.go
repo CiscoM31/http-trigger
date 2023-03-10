@@ -17,6 +17,7 @@ limitations under the License.
 package utils
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -38,7 +39,7 @@ func IsJSON(s string) bool {
 
 // GetHTTPReq returns the http request object that can be used to send a event with payload to function service
 func GetHTTPReq(clientset kubernetes.Interface, funcName, namespace, eventNamespace, method, body string) (*http.Request, error) {
-	svc, err := clientset.CoreV1().Services(namespace).Get(funcName, metav1.GetOptions{})
+	svc, err := clientset.CoreV1().Services(namespace).Get(context.Background(), funcName, metav1.GetOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("Unable to find the service for function %s", funcName)
 	}
