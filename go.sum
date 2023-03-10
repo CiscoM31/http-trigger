@@ -32,6 +32,8 @@ github.com/CiscoM31/kubeless v1.0.8 h1:paVDQSWae0wRiyzOcqANXYIgoJNb5X30DtBgCKdFx
 github.com/CiscoM31/kubeless v1.0.8/go.mod h1:4Yx0FieOE/RqOzaAzqEwVFSjMQBQaOGMzWnCEgbRRNo=
 github.com/CiscoM31/kubeless v1.0.9-cisco h1:OblH3FcNR0NsNy7h8MjX3Kg5nvlnTLovZeMrbWLx3VE=
 github.com/CiscoM31/kubeless v1.0.9-cisco/go.mod h1:4Yx0FieOE/RqOzaAzqEwVFSjMQBQaOGMzWnCEgbRRNo=
+github.com/CiscoM31/kubeless v1.0.9-cisco.0.20230308175931-94b8aafeb718 h1:eGBwUXnrMfXmXH2rB2Uc2NNv52CU1rtzQr/aDekN8Qw=
+github.com/CiscoM31/kubeless v1.0.9-cisco.0.20230308175931-94b8aafeb718/go.mod h1:4Yx0FieOE/RqOzaAzqEwVFSjMQBQaOGMzWnCEgbRRNo=
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
 github.com/PuerkitoBio/purell v1.0.0 h1:0GoNN3taZV6QI81IXgCbxMyEaJDXMSIjArYBCYzVVvs=
 github.com/PuerkitoBio/purell v1.0.0/go.mod h1:c11w/QuzBsJSee3cPx9rAFu61PvFxuPbtSwDGJws/X0=
