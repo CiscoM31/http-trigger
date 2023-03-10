@@ -237,6 +237,8 @@ func CreateIngress(client kubernetes.Interface, httpTriggerObj *kubelessApi.HTTP
 		return fmt.Errorf("Unable to find the function internal service: %v", funcSvc)
 	}
 
+	pathType := v1.PathTypePrefix
+
 	ingress := &v1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            httpTriggerObj.Name,
@@ -252,7 +254,8 @@ func CreateIngress(client kubernetes.Interface, httpTriggerObj *kubelessApi.HTTP
 						HTTP: &v1.HTTPIngressRuleValue{
 							Paths: []v1.HTTPIngressPath{
 								{
-									Path: "/" + httpTriggerObj.Spec.Path,
+									Path:     "/" + httpTriggerObj.Spec.Path,
+									PathType: &pathType,
 									Backend: v1.IngressBackend{
 										Service: &v1.IngressServiceBackend{
 											Name: funcSvc.Name,
@@ -348,8 +351,7 @@ func CreateIngress(client kubernetes.Interface, httpTriggerObj *kubelessApi.HTTP
 	_, err = client.NetworkingV1().Ingresses(httpTriggerObj.Namespace).Create(ctx, ingress, metav1.CreateOptions{})
 	if err != nil && k8sErrors.IsAlreadyExists(err) {
 		var newIngress *v1.Ingress
-		//newIngress, err = client.ExtensionsV1beta1().Ingresses(httpTriggerObj.Namespace).Get(ingress.Name, metav1.GetOptions{})
-		newIngress, err = client.NetworkingV1().Ingresses("").Get(ctx, ingress.Name, metav1.GetOptions{})
+		newIngress, err = client.NetworkingV1().Ingresses(httpTriggerObj.Namespace).Get(ctx, ingress.Name, metav1.GetOptions{})
 		if err != nil {
 			return err
 		}
