@@ -116,7 +116,7 @@ func (c *FakeHTTPTriggers) DeleteCollection(options *v1.DeleteOptions, listOptio
 // Patch applies the patch and returns the patched hTTPTrigger.
 func (c *FakeHTTPTriggers) Patch(name string, pt types.PatchType, data []byte, subresources ...string) (result *v1beta1.HTTPTrigger, err error) {
 	obj, err := c.Fake.
-		Invokes(testing.NewPatchSubresourceAction(httptriggersResource, c.ns, name, data, subresources...), &v1beta1.HTTPTrigger{})
+		Invokes(testing.NewPatchSubresourceAction(httptriggersResource, c.ns, name, types.JSONPatchType, data, subresources...), &v1beta1.HTTPTrigger{})
 
 	if obj == nil {
 		return nil, err
