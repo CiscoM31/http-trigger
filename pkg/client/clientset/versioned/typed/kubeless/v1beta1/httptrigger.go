@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,6 +16,7 @@ limitations under the License.
 package v1beta1
 
 import (
+	"context"
 	v1beta1 "github.com/kubeless/http-trigger/pkg/apis/kubeless/v1beta1"
 	scheme "github.com/kubeless/http-trigger/pkg/client/clientset/versioned/scheme"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -65,7 +66,7 @@ func (c *hTTPTriggers) Get(name string, options v1.GetOptions) (result *v1beta1.
 		Resource("httptriggers").
 		Name(name).
 		VersionedParams(&options, scheme.ParameterCodec).
-		Do().
+		Do(context.Background()).
 		Into(result)
 	return
 }
@@ -77,7 +78,7 @@ func (c *hTTPTriggers) List(opts v1.ListOptions) (result *v1beta1.HTTPTriggerLis
 		Namespace(c.ns).
 		Resource("httptriggers").
 		VersionedParams(&opts, scheme.ParameterCodec).
-		Do().
+		Do(context.Background()).
 		Into(result)
 	return
 }
@@ -89,7 +90,7 @@ func (c *hTTPTriggers) Watch(opts v1.ListOptions) (watch.Interface, error) {
 		Namespace(c.ns).
 		Resource("httptriggers").
 		VersionedParams(&opts, scheme.ParameterCodec).
-		Watch()
+		Watch(context.Background())
 }
 
 // Create takes the representation of a hTTPTrigger and creates it.  Returns the server's representation of the hTTPTrigger, and an error, if there is any.
@@ -99,7 +100,7 @@ func (c *hTTPTriggers) Create(hTTPTrigger *v1beta1.HTTPTrigger) (result *v1beta1
 		Namespace(c.ns).
 		Resource("httptriggers").
 		Body(hTTPTrigger).
-		Do().
+		Do(context.Background()).
 		Into(result)
 	return
 }
@@ -112,7 +113,7 @@ func (c *hTTPTriggers) Update(hTTPTrigger *v1beta1.HTTPTrigger) (result *v1beta1
 		Resource("httptriggers").
 		Name(hTTPTrigger.Name).
 		Body(hTTPTrigger).
-		Do().
+		Do(context.Background()).
 		Into(result)
 	return
 }
@@ -124,7 +125,7 @@ func (c *hTTPTriggers) Delete(name string, options *v1.DeleteOptions) error {
 		Resource("httptriggers").
 		Name(name).
 		Body(options).
-		Do().
+		Do(context.Background()).
 		Error()
 }
 
@@ -135,7 +136,7 @@ func (c *hTTPTriggers) DeleteCollection(options *v1.DeleteOptions, listOptions v
 		Resource("httptriggers").
 		VersionedParams(&listOptions, scheme.ParameterCodec).
 		Body(options).
-		Do().
+		Do(context.Background()).
 		Error()
 }
 
@@ -148,7 +149,7 @@ func (c *hTTPTriggers) Patch(name string, pt types.PatchType, data []byte, subre
 		SubResource(subresources...).
 		Name(name).
 		Body(data).
-		Do().
+		Do(context.Background()).
 		Into(result)
 	return
 }

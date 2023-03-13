@@ -17,8 +17,10 @@ limitations under the License.
 package utils
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	v1 "k8s.io/api/networking/v1"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -26,14 +28,13 @@ import (
 	httptriggerapi "github.com/kubeless/http-trigger/pkg/apis/kubeless/v1beta1"
 	kubelessApi "github.com/kubeless/http-trigger/pkg/apis/kubeless/v1beta1"
 
-	"k8s.io/api/extensions/v1beta1"
+	"github.com/sirupsen/logrus"
 	k8sErrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-	"github.com/sirupsen/logrus"
-	"k8s.io/apimachinery/pkg/types"
 
 	// Auth plugins
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
@@ -186,7 +187,7 @@ func GetLocalHostname(config *rest.Config, funcName string) (string, error) {
 
 // DeleteIngress deletes an ingress rule
 func DeleteIngress(client kubernetes.Interface, name, ns string) error {
-	err := client.ExtensionsV1beta1().Ingresses(ns).Delete(name, &metav1.DeleteOptions{})
+	err := client.ExtensionsV1beta1().Ingresses(ns).Delete(context.Background(), name, metav1.DeleteOptions{})
 	if err != nil && !k8sErrors.IsNotFound(err) {
 		return err
 	}
@@ -216,7 +217,7 @@ func doRESTReq(restIface rest.Interface, groupVersion, verb, resource, elem, nam
 	default:
 		return fmt.Errorf("Verb %s not supported", verb)
 	}
-	rawResponse, err := req.AbsPath("apis", groupVersion, "namespaces", namespace, resource).DoRaw()
+	rawResponse, err := req.AbsPath("apis", groupVersion, "namespaces", namespace, resource).DoRaw(context.Background())
 	if err != nil {
 		return err
 	}
@@ -231,30 +232,37 @@ func doRESTReq(restIface rest.Interface, groupVersion, verb, resource, elem, nam
 
 // CreateIngress creates ingress rule for a specific function
 func CreateIngress(client kubernetes.Interface, httpTriggerObj *kubelessApi.HTTPTrigger, or []metav1.OwnerReference) error {
-	funcSvc, err := client.CoreV1().Services(httpTriggerObj.ObjectMeta.Namespace).Get(httpTriggerObj.Spec.FunctionName, metav1.GetOptions{})
+	funcSvc, err := client.CoreV1().Services(httpTriggerObj.ObjectMeta.Namespace).Get(context.Background(), httpTriggerObj.Spec.FunctionName, metav1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("Unable to find the function internal service: %v", funcSvc)
 	}
 
-	ingress := &v1beta1.Ingress{
+	pathType := v1.PathTypePrefix
+
+	ingress := &v1.Ingress{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:            httpTriggerObj.Name,
 			Namespace:       httpTriggerObj.Namespace,
 			OwnerReferences: or,
 			Labels:          httpTriggerObj.ObjectMeta.Labels,
 		},
-		Spec: v1beta1.IngressSpec{
-			Rules: []v1beta1.IngressRule{
+		Spec: v1.IngressSpec{
+			Rules: []v1.IngressRule{
 				{
 					Host: httpTriggerObj.Spec.HostName,
-					IngressRuleValue: v1beta1.IngressRuleValue{
-						HTTP: &v1beta1.HTTPIngressRuleValue{
-							Paths: []v1beta1.HTTPIngressPath{
+					IngressRuleValue: v1.IngressRuleValue{
+						HTTP: &v1.HTTPIngressRuleValue{
+							Paths: []v1.HTTPIngressPath{
 								{
-									Path: "/" + httpTriggerObj.Spec.Path,
-									Backend: v1beta1.IngressBackend{
-										ServiceName: funcSvc.Name,
-										ServicePort: funcSvc.Spec.Ports[0].TargetPort,
+									Path:     "/" + httpTriggerObj.Spec.Path,
+									PathType: &pathType,
+									Backend: v1.IngressBackend{
+										Service: &v1.IngressServiceBackend{
+											Name: funcSvc.Name,
+											Port: v1.ServiceBackendPort{
+												Number: funcSvc.Spec.Ports[0].TargetPort.IntVal,
+											},
+										},
 									},
 								},
 							},
@@ -284,7 +292,7 @@ func CreateIngress(client kubernetes.Interface, httpTriggerObj *kubelessApi.HTTP
 	}
 
 	if len(httpTriggerObj.ObjectMeta.Annotations) > 0 {
-		for k,v := range httpTriggerObj.ObjectMeta.Annotations {
+		for k, v := range httpTriggerObj.ObjectMeta.Annotations {
 			ingressAnnotations[k] = v
 		}
 	}
@@ -319,7 +327,7 @@ func CreateIngress(client kubernetes.Interface, httpTriggerObj *kubelessApi.HTTP
 
 	//  secure an Ingress by specified secret that contains a TLS private key and certificate
 	if len(httpTriggerObj.Spec.TLSSecret) > 0 {
-		ingress.Spec.TLS = []v1beta1.IngressTLS{
+		ingress.Spec.TLS = []v1.IngressTLS{
 			{
 				SecretName: httpTriggerObj.Spec.TLSSecret,
 				Hosts:      []string{httpTriggerObj.Spec.HostName},
@@ -331,7 +339,7 @@ func CreateIngress(client kubernetes.Interface, httpTriggerObj *kubelessApi.HTTP
 	if httpTriggerObj.Spec.TLSAcme {
 		ingressAnnotations["kubernetes.io/tls-acme"] = "true"
 		ingressAnnotations["nginx.ingress.kubernetes.io/ssl-redirect"] = "true"
-		ingress.Spec.TLS = []v1beta1.IngressTLS{
+		ingress.Spec.TLS = []v1.IngressTLS{
 			{
 				Hosts:      []string{httpTriggerObj.Spec.HostName},
 				SecretName: httpTriggerObj.Name + "-tls",
@@ -339,10 +347,11 @@ func CreateIngress(client kubernetes.Interface, httpTriggerObj *kubelessApi.HTTP
 		}
 	}
 	ingress.ObjectMeta.Annotations = ingressAnnotations
-	_, err = client.ExtensionsV1beta1().Ingresses(httpTriggerObj.Namespace).Create(ingress)
+	ctx := context.Background()
+	_, err = client.NetworkingV1().Ingresses(httpTriggerObj.Namespace).Create(ctx, ingress, metav1.CreateOptions{})
 	if err != nil && k8sErrors.IsAlreadyExists(err) {
-		var newIngress *v1beta1.Ingress
-		newIngress, err = client.ExtensionsV1beta1().Ingresses(httpTriggerObj.Namespace).Get(ingress.Name, metav1.GetOptions{})
+		var newIngress *v1.Ingress
+		newIngress, err = client.NetworkingV1().Ingresses(httpTriggerObj.Namespace).Get(ctx, ingress.Name, metav1.GetOptions{})
 		if err != nil {
 			return err
 		}
@@ -351,7 +360,7 @@ func CreateIngress(client kubernetes.Interface, httpTriggerObj *kubelessApi.HTTP
 		}
 		newIngress.ObjectMeta.OwnerReferences = or
 		newIngress.Spec = ingress.Spec
-		_, err = client.ExtensionsV1beta1().Ingresses(httpTriggerObj.Namespace).Update(newIngress)
+		_, err = client.NetworkingV1().Ingresses(httpTriggerObj.Namespace).Update(ctx, newIngress, metav1.UpdateOptions{})
 		if err != nil && k8sErrors.IsAlreadyExists(err) {
 			// The configmap may already exist and there is nothing to update
 			return nil
