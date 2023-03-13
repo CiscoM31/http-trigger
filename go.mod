@@ -22,4 +22,4 @@ require (
 	k8s.io/client-go v0.19.16
 )
 
-replace github.com/kubeless/kubeless v1.0.3 => ../kubeless
+replace github.com/kubeless/kubeless v1.0.3 => github.com/CiscoM31/kubeless v1.0.9-cisco-k8s-1.22-dependency
